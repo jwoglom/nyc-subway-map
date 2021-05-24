@@ -38,12 +38,21 @@ L.Control.geocoder({
 
 
 var linesLayer;
+var linesData;
 var allRouteIds = [];
 function addLines(lines) {
+   linesData = lines;
    linesLayer = new L.geoJson(lines, {
      opacity: 0.5,
      onEachFeature: function(feature, layer) {
-       layer.bindPopup(buildLinePopup(feature));
+       var l = layer.bindPopup(buildLinePopup(feature));
+       l.getPopup().on('add', function() {
+         onLinePopupOpen(feature);
+       });
+       l.getPopup().on('remove', function() {
+         onLinePopupClose(feature);
+       });
+       return l;
      }
    }).addTo(map);
   
@@ -76,6 +85,7 @@ function addLines(lines) {
             case "Q": return {color: "#FCCC0A"};
             case "R": return {color: "#FCCC0A"};
             case "S": return {color: "#808183"};
+            case "FS": return {color: "#808183"};
             case "7": return {color: "#A7A9AC"};
         }
     });
@@ -111,52 +121,16 @@ function genPolygonCoords(feature) {
       map[JSON.stringify(toJson.properties)] = polygonCoords;
   }
   
-  return map;
-  
-  
-  
+  return map; 
 }
 
 
-// function processClick(layer, lat, lng) {
-//   console.log("processClick", layer, lat, lng);
-//   var point = [lng, lat];
-//   //console.log(leafletPip.pointInLayer(point, layer, false));
-//   let gj = layer.toGeoJSON();
-//   console.log(gj);
-//   let pad = 0.000000001;
-//   gj.features.forEach(function(feat) {
-//     let isect = gju.lineStringsIntersect(feat.geometry, { "type": "LineString", "coordinates": [
-//       [lat-pad,lng-pad],
-//       [lat,lng],
-//       [lat+pad,lng+pad]
-//     ] });
-//     if (isect) {
-//       console.info("isec:", feat.properties);
-//     }
-//   });
-  
-
-//   var info = '';
-//   var point = [lng, lat];
-//   var coords = genPolygonCoords(layer);
-//   Object.entries(coords).forEach(function(properties, coord) {  
-//     console.log("foreach:", properties, coord);
-//     var match = leafletPip.pointInLayer(point, coord, false);
-//     if (match.length > 1) {
-//       console.log(match);
-//       for (var i = 0; i < match.length; i++) {
-//         info += match[i]+"<br>";
-//       }
-//     }
-  
-//   })
-  
-//   if (info) {
-//     layer.openPopup(info, [lat, lng]);
-//   }
-
-// };
+function getLinesFromSegment(feature) {
+  let line = feature["properties"]["Line"];
+  let div = feature["properties"]["Division"];
+  let matchingSegments = linesData["features"].filter(i => i["properties"]["Line"] == line && i["properties"]["Division"] == div);
+  return matchingSegments.map(i => i["properties"]["route_id"]).join("-");
+}
 
 function buildLinePopup(feature) {
   
@@ -164,7 +138,7 @@ function buildLinePopup(feature) {
          feature["properties"]["Line"] +
          " (" + feature["properties"]["Division"] + ")" +
          "</b><br />" +
-         buildLinesHtml(feature["properties"]["route_id"])
+         buildLinesHtml(getLinesFromSegment(feature))
 }
 
 function parseFeatureData(feature) {
@@ -192,16 +166,36 @@ function buildStopPopup(feature, withLink) {
          buildLinesHtml(data["LINE"]);
 }
 
+function buildStopClassName(feature) {
+  var cls = "stop-marker";
+  var data = parseFeatureData(feature);
+  var lines = getStopLineNames(data["LINE"]);
+  for (var i=0; i<lines.length; i++) {
+    cls += " line-" + lines[i];
+  }
+  return cls;
+}
+
+function getStopLineNames(line) {
+  var ret = [];
+  var lines = line.split("-");
+  for (var i=0; i<lines.length; i++) {
+    let l = lines[i].replace(" Express", "X");
+    ret.push(l);
+  }
+  return ret;
+}
+
 function buildLinesHtml(line, disableAuto) {
   var urlBase = "https://new.mta.info/themes/custom/bootstrap_mta/images/icons/";
-  var lines = line.split("-");
+  var lines = getStopLineNames(line);
   var str = "<span style='white-space: nowrap; display: table-cell; vertical-align: middle'>";
   var onclick = "";
   if (disableAuto === true) {
     onclick = "disableAutoFilter()"
   }
   for (var i=0; i<lines.length; i++) {
-    let l = lines[i].replace(" Express", "X");
+    let l = lines[i];
     str += "<img src='" + urlBase + l + ".svg' class='line-img line-" + l + "' style='cursor: pointer' onclick='clickLine(\"" + l + "\");" + onclick + "' width=20 valign=center />&nbsp;";
   }
   return str + "</span>";
@@ -219,12 +213,16 @@ function clickLine(line, open) {
       selectedLines.push(line);
     }
   }
-  var h = "";
+  
+  var notLines = "";
   for (var i=0; i<selectedLines.length; i++) {
-    h += ":not(.line-"+selectedLines[i]+")"; 
+    notLines += ":not(.line-"+selectedLines[i]+")"; 
   }
-  if (h.length > 0) {
-    sls.innerHTML = ".line-img" + h + " { opacity: 0.5 }";
+  
+  if (notLines.length > 0) {
+    // Highlight line image and stop markers
+    sls.innerHTML = ".line-img" + notLines + " { opacity: 0.5 }\n" +
+                    ".stop-marker" + notLines + " { opacity: 0.5 }";
   } else {
     sls.innerHTML = "";
   }
@@ -255,7 +253,7 @@ function onStopPopupOpen(feature) {
   if (autoFilterEnabled()) {
     var data = parseFeatureData(feature);
     console.log("onStopPopupOpen", data);
-    data["LINE"].split("-").forEach(l => clickLine(l, true));
+    getStopLineNames(data["LINE"]).forEach(l => clickLine(l, true));
   }
 }
 
@@ -263,7 +261,25 @@ function onStopPopupClose(feature) {
   if (autoFilterEnabled()) {
     var data = parseFeatureData(feature);
     console.log("onStopPopupClose", data);
-    data["LINE"].split("-").forEach(l => clickLine(l, false));
+    getStopLineNames(data["LINE"]).forEach(l => clickLine(l, false));
+  }
+}
+
+function onLinePopupOpen(feature) {
+  if (autoFilterEnabled()) {
+    console.log(feature);
+    let lines = getLinesFromSegment(feature);
+    console.log("onLinePopupOpen", lines);
+    getStopLineNames(lines).forEach(l => clickLine(l, true));
+  }
+}
+
+function onLinePopupClose(feature) {
+  if (autoFilterEnabled()) {
+    console.log(feature)
+    let lines = getLinesFromSegment(feature);
+    console.log("onLinePopupClose", lines);
+    getStopLineNames(lines).forEach(l => clickLine(l, false));
   }
 }
 
@@ -276,7 +292,8 @@ function addStops(stops) {
                 color: "#000",
                 weight: 3,
                 opacity: 1,
-                fillOpacity: 1
+                fillOpacity: 1,
+                className: buildStopClassName(feature)
             }).bindPopup(buildStopPopup(feature, true));
           
             m.getPopup().on('add', function() {
@@ -406,7 +423,7 @@ fetchLines(function() {
 })
 
 function initLinesList() {
-  var allLines = "1-2-3-4-5-6-B-D-F-M-A-C-E-G-J-Z-L-N-Q-R-S-7";
+  var allLines = "1-2-3-4-5-6-B-D-F-M-A-C-E-G-J-Z-L-N-Q-R-S-FS-7";
   document.querySelector("#lines-list").innerHTML = buildLinesHtml(allLines, true);
 }
 initLinesList();
