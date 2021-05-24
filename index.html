@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>NYC Subway Map</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css">
+    
+    <!-- import the webpage's javascript file -->
+    <script src="/script.js" defer></script>
+    <!-- import the Leaflet.js CSS and JavaScript files -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
+     integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+     crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
+     integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+     crossorigin=""></script>
+    <!--script
+    src="https://unpkg.com/@mapbox/leaflet-pip@1.1.0/leaflet-pip.js"
+    integrity="sha384-VfrdCS+epUUBb4DAqpTSWj7O4LmwA24lhLVnTt/XF1eNKWIBBsGcp6uMI4ro5z8L"
+    crossorigin=""></script-->
+    <!--script src="https://unpkg.com/geojson-utils@1.1.0/geojson-utils.js" integrity="sha384-Knd9x1ETAmoRsjyr+tGusx3jNeAik/+EbkgJ/phPodwNW75TJqNbkjpJmLYDaB8K" crossorigin="anonymous">
+    </script-->
+    <!--script src="/pip.js"></script-->
+    <script
+    src="https://unpkg.com/jsts@1.6.1/dist/jsts.min.js"
+    integrity="sha384-nPX5YSK3HkyiB4GuS2LZ9l9sJzBXfCw3+62CXvIVQHjLoFl6rbfLipMR+L8TQ3nI"
+    crossorigin="anonymous"></script>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    
+    <style id="selected-line-style"></style>
+    
+  </head>  
+  <body>
+     <div id="mapid"></div>
+     <div id="bottom-part">
+       <span id="lines-list"></span>
+       <span class="auto-filter-section" title="When a station is selected, will automatically highlight its lines">
+         <input type="checkbox" id="auto-filter" checked /> <label for="auto-filter">Auto-filter</label>
+       </span>
+     </div>
+     
+
+    <!-- include the Glitch button to show what the webpage is about and
+          to make it easier for folks to view source and remix -->
+    <div class="glitchButton position-y-top" style="position:fixed;bottom:30px;right:30px;zoom: 0.5"></div>
+    <script src="https://button.glitch.me/button.js"></script>
+  </body>
+</html>
