@@ -9,9 +9,9 @@
 /* MAP SETUP
 */
 
-let SUBWAY_STATIONS = "https://cdn.glitch.com/1030e7bb-9139-4731-ba93-6d376b180bbd%2Fsubway-stations.geojson?v=1616964201169";
-let SUBWAY_ENTRANCES = "https://cdn.glitch.com/1030e7bb-9139-4731-ba93-6d376b180bbd%2Fsubway-entrances.geojson?v=1616966085398";
-let SUBWAY_ROUTES = "https://cdn.glitch.com/1030e7bb-9139-4731-ba93-6d376b180bbd%2Fsubway-routes.geojson?v=1616964313747";
+let SUBWAY_STATIONS = "subway-stations.geojson";
+let SUBWAY_ENTRANCES = "subway-entrances.geojson";
+let SUBWAY_ROUTES = "subway-routes.geojson";
 
 
 // make the map
@@ -22,7 +22,7 @@ let map = L.map("mapid", {
 });
 // add the basemap tiles
 L.tileLayer(
-  "https://stamen-tiles.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}@2x.png" // stamen toner tiles
+  "https://tiles.stadiamaps.com/tiles/stamen_toner_lite/{z}/{x}/{y}{r}.png	" // stamen toner tiles
 ).addTo(map);
 
 // Add leaflet-control-geocoder
